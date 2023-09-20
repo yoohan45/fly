@@ -56,7 +56,8 @@ class Bird{
     
     space_once += 1;
     
-
+    if(score >=10 && score<20)
+    this.c = "Orange"
     
   }
   Draw(){
@@ -327,7 +328,8 @@ function(err, data) {
       alert('예상치 못한 오류 발생'+err);
   }
   else{
-      alert(data.weather[0].main);
+      alert(`오늘 날씨는?
+      ${data.weather[0].main}!!!`);
       weather = data.weather[0].main;
       console.log(weather);
 

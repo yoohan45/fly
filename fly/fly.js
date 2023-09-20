@@ -1,17 +1,21 @@
 const canvas = document.getElementById('fly');
 const ctx = canvas.getContext('2d');
 
-let score;
+let score = 0;
 let scoreText;
 let highscore;
 let highscoreText;
 let bird;
 let gameSpeed;
+let gameSpeedinit=0.003;
+let entered = 0;
 let bottom_obstacles = [];
 let top_obstacles = [];
-
 let judgements = [];
 let keys={};
+let space_once = 0;
+let weather = "Clear";
+let dum = false;
 
 document.addEventListener('keydown', function(evt){
   keys[evt.code] = true;
@@ -30,8 +34,8 @@ class Bird{
     this.h = h;
     this.c = c;
 
-    this.power = 2;
-    this.gravity = this.power;
+    this.power = 0.7;
+    this.gravity = 0;
     this.grounded = false;
 
   }
@@ -39,13 +43,19 @@ class Bird{
   update(){ // 프레임마다 속성들을 변화시킴 
     // y값의 변동을 계산
     this.y += this.gravity; 
-    this.gravity += 0.5 // 중력 값
+    this.gravity += this.power // 중력 값
     //console.log(this.gravity)
-    if(keys['Space']||keys['KeyW'])
+    if(keys['Space']||keys['KeyW']&&grounded == false)
     {
       
-      this.gravity = -5;
+      if(space_once >3){
+      this.gravity = -10;
+      }
+      space_once = 0;
     }
+    
+    space_once += 1;
+    
 
     
   }
@@ -89,7 +99,7 @@ class Obstacle {
     ctx.closePath();
   }
 }
-
+//Judgment class
 class Judgment {
   constructor(x, y, w, h, c) {
       
@@ -116,6 +126,28 @@ class Judgment {
   }
 }
 
+//Text class
+class Text{
+  constructor(t, x, y, a, c, s){
+
+      this.t = t;
+      this.x = x;
+      this.y = y;
+      this.a = a;
+      this.c = c;
+      this.s = s;
+  }
+  Draw(){
+      ctx.beginPath();
+      ctx.fillStyle=this.c;
+      ctx.font = this.s +"px sans-serif";
+      ctx.textAlign = this.a;
+      ctx.fillText(this.t, this.x, this.y);
+      ctx.closePath();
+  }
+}
+
+
 //오타클 생성
 function SpawnObstacle() {
   let size = RandomIntInRage(40, canvas.height/2+50);
@@ -132,20 +164,34 @@ function RandomIntInRage(min, max){
   return Math.round(Math.random() * (max-min) + min);
 }
 
+
+function Init(){
+  alert("점수: " + score);
+  alert("아쉽네요!");
+
+  
+
+  
+
+  
+}
+
 //Start
 function Start(){
   canvas.witdth = window.innerWidth;
   canvas.height = window.innerHeight;
 
-
+  
 
   gameSpeed = 3;
   
   score = 0;
   highscore = 0;
 
-  bird = new Bird(100, canvas.height/2, 75, 75, "Yellow");
+  bird = new Bird(100, canvas.height/2-150, 75, 75, "Yellow");
   bird.Draw();
+
+  scoreText = new Text("Score: " + score, 25, 25, "left", "Gray", "20");
   requestAnimationFrame(Update);
   
 }
@@ -177,17 +223,114 @@ function Update() {
 
   for(let i=0; i< top_obstacles.length; i++)
     {
-
         let t_o = top_obstacles[i];
-        t_o.Update();
         let b_o = bottom_obstacles[i];
-        b_o.Update();
         let ju = judgements[i];
+        
+        
+        if(t_o.x+t_o.w<0)
+        {
+          top_obstacles.splice(i,1);
+        }
+
+        if(bird.x< t_o.x+t_o.w&&
+          bird.x+bird.w>t_o.x&&
+          bird.y<t_o.y+t_o.h&&
+          bird.y+bird.h>t_o.y)
+          {
+            console.log("땃쥐");
+            Init();
+          }
+        
+        if(b_o.x+b_o.w<0)
+        {
+          bottom_obstacles.splice(i,1);
+        }
+
+        if(bird.x< b_o.x+b_o.w&&
+          bird.x+bird.w>b_o.x&&
+          bird.y<b_o.y+b_o.h&&
+          bird.y+bird.h>b_o.y)
+          {
+            console.log("땃쥐");
+            Init();
+          }
+
+        if(ju.x+ju.w<0)
+        {
+          judgements.splice(i,1);
+        }
+
+        
+
+
+        
+
+        if(bird.x< ju.x+ju.w&&
+          bird.x+bird.w>ju.x&&
+          bird.y<ju.y+ju.h&&
+          bird.y+bird.h>ju.y
+          )
+          {
+            if (entered>5) {
+              score += 1;
+            }
+            
+            entered = 0;
+
+          }
+          else{
+            entered += 1;
+          }
+        
+          
+          
+          
+          
+          
+         
         ju.Update();
+        b_o.Update();
+        t_o.Update();
     }
 
-  gameSpeed += 0.003;
+    scoreText.t ="score: " + score;
+    scoreText.Draw();
+
+  gameSpeed += gameSpeedinit;
 
 }
 
 Start();
+
+
+const getJSON = function(url, callback) {
+  const xhr = new XMLHttpRequest();
+  xhr.open("GET", url, true);
+  xhr.responseType = "json";
+  xhr.onload = function(){
+      const status = xhr.status;
+      if(status === 200){
+          callback(null, xhr.response);
+      }else{
+          callback(status, xhr.response);
+      }
+  }
+  
+xhr.send();
+};
+
+getJSON("https://api.openweathermap.org/data/2.5/weather?q=Tokyo&appid=53f8472fa30662b5735381711b9bd610&units=metric"
+,
+function(err, data) {
+  if(err !== null) {
+      alert('예상치 못한 오류 발생'+err);
+  }
+  else{
+      alert(data.weather[0].main);
+      weather = data.weather[0].main;
+      console.log(weather);
+
+
+  }
+});

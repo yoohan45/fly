@@ -12,10 +12,15 @@ let entered = 0;
 let bottom_obstacles = [];
 let top_obstacles = [];
 let judgements = [];
+let rain1= [];
 let keys={};
 let space_once = 0;
-let weather = "Clear";
+let w = "Clear";
 let dum = false;
+let out = false;
+let top_boundary;
+let bottom_boundary;
+
 
 document.addEventListener('keydown', function(evt){
   keys[evt.code] = true;
@@ -56,26 +61,53 @@ class Bird{
     
     space_once += 1;
     
-    if(score >=10 && score<20)
-    this.c = "Orange"
+    
     
   }
   Draw(){
-    ctx.beginPath();
-    ctx.fillStyle = this.c;
-    ctx.fillRect(this.x, this.y, this.w, this.h);
-    ctx.closePath();
-    
-  }
-  
+    var img = new Image();
 
-  
-   
+    if(score<10)
+    {
+      img.src = "./resource/chick.png";
+    ctx.drawImage(img, this.x, this.y, this.w,this.h);
+    }
+    else if(score >=10 && score<20)
+    {
+      img.src = "./resource/chick2.png";
+    ctx.drawImage(img, this.x, this.y, this.w,this.h);
+    }
+    else if(score >=20 && score<30)
+    {
+      img.src = "./resource/chicken.png";
+    ctx.drawImage(img, this.x, this.y, this.w,this.h);
+    }
+    else if(score >=30)
+    {
+      img.src = "./resource/chicken2.png";
+    ctx.drawImage(img, this.x, this.y, this.w,this.h);
+    }
+    
+    
+  } 
+}
+
+class Boundary{
+  constructor(x,y,w,h)
+  {
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+  }
 }
 
 
+
+
+
 //obstacle class
-class Obstacle {
+class Bottomobstacle {
   constructor(x, y, w, h, c) {
       
       this. x = x;
@@ -94,10 +126,44 @@ class Obstacle {
   }
 
   Draw() {
-    ctx.beginPath();
-    ctx.fillStyle = this.c;
-    ctx.fillRect(this.x, this.y, this.w, this.h);
-    ctx.closePath();
+    var img = new Image();
+
+    img.src = "./resource/fork.png";
+    ctx.drawImage(img, this.x, this.y, this.w,this.h);
+    
+    
+    
+  }
+}
+
+
+
+class Topobstacle {
+  constructor(x, y, w, h, c) {
+      
+      this. x = x;
+      this. y = y;
+      this. w = w;
+      this. h = h;
+      this. c = c;
+
+      this.dx = -gameSpeed;
+  }
+
+  Update(){
+      this.x += this.dx;
+      this.Draw();
+      this.dx = -gameSpeed;
+  }
+
+  Draw() {
+    var img = new Image();
+
+    img.src = "./resource/fork2.png";
+    ctx.drawImage(img, this.x, this.y, this.w,this.h);
+    
+    
+    
   }
 }
 //Judgment class
@@ -115,15 +181,45 @@ class Judgment {
 
   Update(){
       this.x += this.dx;
-      this.Draw();
       this.dx = -gameSpeed;
+  }
+
+  
+}
+
+
+class Rain {
+  constructor(x, y, w, h, c) {
+      
+      this. x = x;
+      this. y = y;
+      this. w = w;
+      this. h = h;
+      this. c = c;
+
+      this.dx = -gameSpeed;
+      this.power = 0.7;
+      this.gravity = 0;
+  }
+
+  Update(){
+      this.y += this.gravity; 
+      this.gravity += this.power;
+      this.x += this.dx;
+      
+      this.dx = -gameSpeed;
+      
+      this.Draw();
   }
 
   Draw() {
     ctx.beginPath();
-    ctx.fillStyle = this.c;
+    ctx.fillStyle=this.c;
     ctx.fillRect(this.x, this.y, this.w, this.h);
     ctx.closePath();
+    
+    
+    
   }
 }
 
@@ -152,29 +248,59 @@ class Text{
 //오타클 생성
 function SpawnObstacle() {
   let size = RandomIntInRage(40, canvas.height/2+50);
+  let size2 = RandomIntInRage(0, canvas.width);
   let top_size = canvas.height-size-bird.h-150;
-  let obstacle_b = new Obstacle(canvas.width+bird.w+50, canvas.height-size, bird.w+50, size, "Black");
-  let obstacle_t = new Obstacle(canvas.width+bird.w+50, 0, bird.w+50, top_size,"Black");
-  let jud = new Judgment(canvas.width+bird.w+50,  top_size, bird.w+50, canvas.height-size-top_size, "pink")
+  let obstacle_b = new Bottomobstacle(canvas.width+bird.w+50, canvas.height-size, bird.w+50, size, "Black");
+  let obstacle_t = new Topobstacle(canvas.width+bird.w+50, 0, bird.w+50, top_size,"Black");
+  let jud = new Judgment(canvas.width+bird.w+50,  top_size, bird.w+50, canvas.height-size-top_size);
+  
+  
   bottom_obstacles.push(obstacle_b);
   top_obstacles.push(obstacle_t);
   judgements.push(jud);
   
 }
+
+
+function rainSpawn(){
+  let size2 = RandomIntInRage(0, canvas.width);
+  let rain = new Rain(size2, 0, bird.w/2, bird.h, "Blue");
+  rain1.push(rain);
+}
+
 function RandomIntInRage(min, max){
   return Math.round(Math.random() * (max-min) + min);
 }
 
-
+//init
 function Init(){
-  alert("점수: " + score);
-  alert("아쉽네요!");
 
+
+  if(out == false)
+  {
+    alert("아쉽네요");
+    alert("점수 :"+score);
+    out = true;
+  }
+  location.href="./intro.html";
   
 
   
 
   
+
+  
+}
+
+//엔딩
+function Success(){
+  if(out == false)
+  {
+    alert(score+"점 도달!");
+    alert("지글지글");
+    out = true;
+  }
+  location.href="./end.html";
 }
 
 //Start
@@ -184,11 +310,15 @@ function Start(){
 
   
 
+  
+
   gameSpeed = 3;
   
   score = 0;
   highscore = 0;
-
+  
+  top_boundary = new Boundary(0, -1, canvas.width, 1);
+  bottom_boundary = new Boundary(0, canvas.height-1, canvas.width, 1);
   bird = new Bird(100, canvas.height/2-150, 75, 75, "Yellow");
   bird.Draw();
 
@@ -201,12 +331,51 @@ function Start(){
 let initialSpawnTimer = 200;
 let spawnTimer = initialSpawnTimer;
 
+//rain spawn
+
+let initialrainSpawnTimer = 100;
+let rainspawntimer = initialrainSpawnTimer;
+
 //animate
 function Update() {
   requestAnimationFrame(Update);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   bird.Draw();
   bird.update();
+
+  if(keys['KeyP'])
+    {
+      w = "Rain";
+    }
+  else if(keys['KeyO'])
+  {
+    w = "Clear";
+  }
+
+  if(score == 50)
+  {
+    Success();
+
+  }
+
+
+  if(bird.x< top_boundary.x+top_boundary.w&&
+    bird.x+bird.w>top_boundary.x&&
+    bird.y<top_boundary.y+top_boundary.h&&
+    bird.y+bird.h>top_boundary.y){
+      Init();
+    }
+    if(bird.x< bottom_boundary.x+bottom_boundary.w&&
+      bird.x+bird.w>bottom_boundary.x&&
+      bird.y<bottom_boundary.y+bottom_boundary.h&&
+      bird.y+bird.h>bottom_boundary.y)
+      {
+        Init();
+      }
+    
+
+
+  
   
 
   spawnTimer--;
@@ -220,6 +389,46 @@ function Update() {
           spawnTimer = 60;
       }
   }
+
+  if(w == "Rain")
+  {
+      rainspawntimer-=5;
+    if(rainspawntimer <= 0)
+    {
+      rainSpawn();
+      
+
+      rainspawntimer = initialrainSpawnTimer - gameSpeed * 8;
+
+      if(rainspawntimer < 40) {
+        rainspawntimer = 40;
+      }
+    }
+
+    for(let j = 0; j<rain1.length; j++)
+    {
+      let r = rain1[j];
+      
+      if(r.y+r.h<0)
+        {
+          rain1.splice(i,1);
+        }
+
+      if(bird.x< r.x+r.w&&
+        bird.x+bird.w>r.x&&
+        bird.y<r.y+r.h&&
+        bird.y+bird.h>r.y)
+        {
+          bird.y += 20;
+        }
+        
+        
+
+      r.Update();
+
+    }
+  }
+
 
 
   for(let i=0; i< top_obstacles.length; i++)
@@ -330,8 +539,10 @@ function(err, data) {
   else{
       alert(`오늘 날씨는?
       ${data.weather[0].main}!!!`);
-      weather = data.weather[0].main;
-      console.log(weather);
+      w = data.weather[0].main;
+      
+
+      
 
 
   }
